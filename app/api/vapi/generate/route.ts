@@ -54,3 +54,7 @@ export async function POST(request: Request) {
         return Response.json({ success: false, error: "Internal Server Error" }, { status: 500 });
     }
 }
+
+export async function GET() {
+    return Response.json({ success: true, data: "Thank you!" }, { status: 200 });
+  }
