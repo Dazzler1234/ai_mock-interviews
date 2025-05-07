@@ -1,8 +1,25 @@
 'use server';
 
 import { db, auth } from "@/firebase/admin";
+import { CollectionReference, DocumentData } from "firebase-admin/firestore";
 import { User } from "firebase/auth";
+import { doc } from "firebase/firestore";
 import { cookies } from "next/headers";
+
+interface Interview {
+  id: string;
+  userId: string;
+  createdAt: FirebaseFirestore.Timestamp;
+  questions: string[];
+  // Add any other fields as needed
+}
+
+interface GetLatestInterviewsParams {
+  userId: string;
+  limit?: number;
+}
+
+
 
 interface SignUpParams {
   uid: string;
@@ -127,3 +144,39 @@ export async function isAuthenticated() {
   const user = await getCurrentUser();
   return !!user;
 }
+
+export async function getInterviewsByuserId(userId: string): Promise<Interview[] | null> {
+  const interviews = await db
+    .collection('interview')
+    .where('userId', '==', userId)
+    .orderBy('createdAt', 'desc')
+    .get();
+
+  if (interviews.empty) return null;
+
+  return interviews.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as Interview[];
+}
+export async function getLatestInterviews(params: GetLatestInterviewsParams): Promise<Interview[] | null> {
+
+  const {userId , limit = 20} = params;
+
+  const interviews = await db
+    .collection('interview')
+    .orderBy('createdAt', 'desc')
+    .where('finalized', '==', true)
+    .where('userId', '!=' , userId)
+    .limit(limit)
+    .get();
+
+  if (interviews.empty) return null;
+
+  return interviews.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  })) as Interview[];
+}
+
+
